@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empowered Lifestyle Network | We Make Brands Human</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Oswald:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- PapaParse for Google Sheets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            black: '#000000',
+                            dark: '#050505',
+                            card: '#0f0f0f',
+                            gold: '#C69C40', 
+                            goldLight: '#E8CA6B',
+                            goldDark: '#8E6E24',
+                            accent: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        logo: ['Oswald', 'sans-serif'],
+                    },
+                    backgroundImage: {
+                        'gold-gradient': 'linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #C5A028 100%)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #000000; color: #f5f5f7; overflow-x: hidden; }
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #C5A028 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .eln-logo {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: linear-gradient(to bottom, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.5));
+        }
+        .glass {
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(198, 156, 64, 0.15);
+        }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: -1; opacity: 0.4; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .video-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .video-card:hover { transform: scale(1.05); z-index: 20; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #C69C40; }
+        .btn-glow { animation: pulse-gold 3s infinite; }
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(198, 156, 64, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(198, 156, 64, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(198, 156, 64, 0); }
+        }
+        
+        /* View Switching Logic */
+        .view-section { display: none; opacity: 0; transition: opacity 0.5s ease; }
+        .view-section.active { display: block; opacity: 1; }
+        
+        /* Black Friday Banner */
+        .bf-banner {
+            background: linear-gradient(90deg, #C69C40, #E8CA6B, #C69C40);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite linear;
+        }
+        @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-content {
+            background: #111;
+            border: 1px solid #C69C40;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 20px 60px rgba(198, 156, 64, 0.2);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-brand-gold selection:text-black">
+
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Black Friday Banner (Highest Z-Index) -->
+    <div class="fixed top-0 w-full z-[70] bf-banner text-black font-bold text-center py-2 text-xs md:text-sm tracking-wider uppercase cursor-pointer hover:brightness-110 transition-all">
+        <i class="fas fa-bolt mr-2"></i> Jumpstart Your 2026 Funding — Get a $500 Grant Credit Today <i class="fas fa-arrow-right ml-2"></i>
+    </div>
+
+    <!-- Navigation (Sticky below banner) -->
+    <nav class="fixed top-8 md:top-8 w-full z-[60] glass transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center gap-4 cursor-pointer" onclick="switchView('home')">
+                    <div class="text-3xl eln-logo" data-text="ELN">ELN</div>
+                    <div class="h-8 w-px bg-gray-700 hidden sm:block"></div>
+                    <div class="flex flex-col hidden sm:flex">
+                        <span class="font-bold text-xs tracking-[0.2em] text-white leading-none">EMPOWERED</span>
+                        <span class="font-light text-xs tracking-[0.2em] text-brand-gold leading-none mt-1">LIFESTYLE NETWORK</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <button onclick="switchView('watch')" class="text-sm font-medium text-gray-300 hover:text-brand-gold transition-colors tracking-wide">Watch</button>
+                    <button onclick="switchView('services')" class="text-sm font-medium text-gray-300 hover:text-brand-gold transition-colors tracking-wide">Services</button>
+                    <button onclick="switchView('blogs')" class="text-sm font-medium text-gray-300 hover:text-brand-gold transition-colors tracking-wide">Blogs</button>
+                    <button onclick="switchView('story')" class="text-sm font-medium text-gray-300 hover:text-brand-gold transition-colors tracking-wide">Our Story</button>
+                    <!-- Sticky CTA -->
+                    <button onclick="openBooking()" class="bg-gradient-to-r from-brand-gold to-brand-goldDark text-black px-5 py-2 rounded-full text-xs font-bold hover:shadow-[0_0_20px_rgba(198,156,64,0.5)] transition-all duration-300 tracking-wide btn-glow">
+                        BOOK CONSULTATION
+                    </button>
+                </div>
+                
+                <!-- Mobile Burger -->
+                <div class="md:hidden text-white text-xl cursor-pointer p-2" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Dropdown (Fixed Full Screen Overlay) -->
+    <div id="mobile-menu" class="hidden md:hidden fixed inset-0 bg-black/95 backdrop-blur-xl pt-32 px-6 flex flex-col space-y-6 shadow-2xl z-50 transition-all duration-300 overflow-y-auto">
+        <button onclick="switchView('watch'); toggleMobileMenu()" class="text-left text-2xl font-medium text-white hover:text-brand-gold border-b border-gray-800 pb-4">Watch</button>
+        <button onclick="switchView('services'); toggleMobileMenu()" class="text-left text-2xl font-medium text-white hover:text-brand-gold border-b border-gray-800 pb-4">Services</button>
+        <button onclick="switchView('blogs'); toggleMobileMenu()" class="text-left text-2xl font-medium text-white hover:text-brand-gold border-b border-gray-800 pb-4">Blogs</button>
+        <button onclick="switchView('story'); toggleMobileMenu()" class="text-left text-2xl font-medium text-white hover:text-brand-gold border-b border-gray-800 pb-4">Our Story</button>
+        <button onclick="openBooking(); toggleMobileMenu()" class="bg-brand-gold text-black w-full py-5 rounded-xl font-bold text-center mt-4 shadow-lg uppercase tracking-wider text-lg">
+            Book Consultation
+        </button>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="pt-28">
+
+        <!-- ======================= VIEW: HOME ======================= -->
+        <div id="view-home" class="view-section active">
+            <!-- Hero Section -->
+            <section class="min-h-[90vh] flex flex-col justify-center items-center text-center px-4 relative">
+                <div class="z-30 max-w-5xl mx-auto space-y-6 relative">
+                    <span class="inline-block px-4 py-1.5 rounded-full border border-gray-800 bg-gray-900/60 backdrop-blur-md text-brand-gold text-xs font-medium tracking-[0.2em] uppercase mb-4 reveal-text">
+                        The Network for Visionaries
+                    </span>
+                    
+                    <h1 class="text-5xl md:text-8xl font-bold tracking-tighter leading-tight reveal-text text-white">
+                        We Make Brands <br>
+                        <span class="text-gradient-gold">Human.</span>
+                    </h1>
+                    
+                    <p class="mt-6 text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto font-light leading-relaxed reveal-text">
+                        Don’t post content, start building a brand. We provide the AI-enhanced ecosystem to monetize your expertise, so you can inspire, encourage, educate, and empower.
+                    </p>
+                    
+                    <div class="mt-10 flex flex-col sm:flex-row gap-5 justify-center items-center reveal-text w-full max-w-2xl mx-auto">
+                        <!-- Book Demo Button - LINKED -->
+                        <button onclick="openBooking()" class="w-full sm:w-auto px-8 py-4 bg-brand-gold text-black rounded-full font-bold text-sm tracking-widest hover:bg-white transition-all duration-300 transform hover:scale-105 shadow-[0_0_20px_rgba(198,156,64,0.3)] min-w-[220px]">
+                            BOOK DEMO
+                        </button>
+                        <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="w-full sm:w-auto px-8 py-4 text-white border border-gray-700 rounded-full font-medium text-sm tracking-widest hover:border-brand-gold hover:text-brand-gold transition-all duration-300 flex items-center justify-center gap-2 group min-w-[200px]">
+                            WATCH NOW <i class="fas fa-play text-xs ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="absolute bottom-0 w-full h-48 bg-gradient-to-t from-black via-black/80 to-transparent z-20 flex flex-col justify-end pb-8 pointer-events-none"></div>
+            </section>
+
+            <!-- Home: Two Pillars of Power -->
+            <section class="py-24 bg-brand-dark border-b border-gray-900 relative">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h3 class="text-brand-gold text-sm font-bold tracking-widest uppercase mb-2">Our Expertise</h3>
+                        <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-white">Two Pillars of Power</h2>
+                        <p class="text-gray-400 text-lg max-w-2xl mx-auto mt-4">We combine technical distribution with human connection.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Service 1: Branding -->
+                        <div class="group p-10 rounded-[2rem] bg-gradient-to-br from-gray-900 to-black border border-gray-800 hover:border-brand-gold transition-all duration-300 relative overflow-hidden cursor-pointer" onclick="switchView('services')">
+                            <div class="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <i class="fas fa-fingerprint text-9xl text-white"></i>
+                            </div>
+                            <div class="relative z-10">
+                                <div class="w-16 h-16 rounded-2xl bg-gray-800 flex items-center justify-center mb-8 text-brand-gold text-2xl shadow-lg">
+                                    <i class="fas fa-pen-nib"></i>
+                                </div>
+                                <h3 class="text-3xl font-bold text-white mb-4">Brand Development</h3>
+                                <p class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-4">The Soul</p>
+                                <p class="text-gray-400 mb-8 leading-relaxed">
+                                    We don’t just design logos; we architect living identities. By merging human intuition with agentic systems, we craft a brand that doesn't just speak—it learns, adapts, and monetizes your story in real-time.
+                                </p>
+                                <ul class="space-y-3 mb-8 text-sm text-gray-300">
+                                    <li class="flex items-center gap-3"><i class="fas fa-check text-brand-gold"></i> Living Digital Footprint</li>
+                                    <li class="flex items-center gap-3"><i class="fas fa-check text-brand-gold"></i> Agentic Marketing & Lead Generation</li>
+                                    <li class="flex items-center gap-3"><i class="fas fa-check text-brand-gold"></i> Social Media Campaign & Ad Optimization</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Service 2: Streaming -->
+                        <div class="group p-10 rounded-[2rem] bg-gradient-to-br from-gray-900 to-black border border-gray-800 hover:border-brand-gold transition-all duration-300 relative overflow-hidden cursor-pointer" onclick="switchView('services')">
+                            <div class="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <i class="fas fa-satellite-dish text-9xl text-white"></i>
+                            </div>
+                            <div class="relative z-10">
+                                <div class="w-16 h-16 rounded-2xl bg-gray-800 flex items-center justify-center mb-8 text-brand-gold text-2xl shadow-lg">
+                                    <i class="fas fa-tv"></i>
+                                </div>
+                                <h3 class="text-3xl font-bold text-white mb-4">Streaming Infrastructure</h3>
+                                <p class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-4">The Tech</p>
+                                <p class="text-gray-400 mb-8 leading-relaxed">
+                                    Distribution is power. Guided by humans and powered by AI, we curate and autonomously distribute your narrative across Roku, Apple TV, Amazon Fire, Web, and Mobile.
+                                </p>
+                                <ul class="space-y-3 mb-8 text-sm text-gray-300">
+                                    <li class="flex items-center gap-3"><i class="fas fa-check text-brand-gold"></i> Autonomous Channel Development</li>
+                                    <li class="flex items-center gap-3"><i class="fas fa-check text-brand-gold"></i> Subscription & Pay-Per-View Setup</li>
+                                    <li class="flex items-center gap-3"><i class="fas fa-check text-brand-gold"></i> Multi-Platform Live Streaming</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Home: Three Levels of Success -->
+            <section class="py-24 bg-brand-black relative z-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="mb-16 text-center">
+                        <h3 class="text-brand-gold text-sm font-bold tracking-widest uppercase mb-2">The Business Model</h3>
+                        <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-white">THREE LEVELS OF SUCCESS</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <!-- Level 1 -->
+                        <div class="border border-gray-800 bg-gray-900/40 rounded-2xl p-8 hover:border-brand-gold transition-colors duration-300">
+                            <div class="text-6xl font-bold text-brand-gold opacity-10 mb-4">01</div>
+                            <h3 class="text-2xl font-bold text-white mb-2">ATTRACTION</h3>
+                            <p class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-4">Brand Awareness</p>
+                            <p class="text-gray-400 text-sm">Draw new customers through our marketing and branding efforts.</p>
+                        </div>
+                        <!-- Level 2 -->
+                        <div class="border border-gray-800 bg-gray-900/40 rounded-2xl p-8 hover:border-brand-gold transition-colors duration-300">
+                            <div class="text-6xl font-bold text-brand-gold opacity-10 mb-4">02</div>
+                            <h3 class="text-2xl font-bold text-white mb-2">CONVERSION</h3>
+                            <p class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-4">Customer Acquisition</p>
+                            <p class="text-gray-400 text-sm">Turning leads into customers, taking all the eyes.</p>
+                        </div>
+                        <!-- Level 3 -->
+                        <div class="border border-gray-800 bg-gray-900/40 rounded-2xl p-8 hover:border-brand-gold transition-colors duration-300">
+                            <div class="text-6xl font-bold text-brand-gold opacity-10 mb-4">03</div>
+                            <h3 class="text-2xl font-bold text-white mb-2">RETENTION</h3>
+                            <p class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-4">Brand Loyalty</p>
+                            <p class="text-gray-400 text-sm">Life Cycle marketing.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Home: Latest Blogs Section -->
+            <section class="py-24 bg-brand-black border-t border-gray-900 relative">
+                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="mb-16 flex flex-col md:flex-row justify-between items-end">
+                        <div>
+                            <h3 class="text-brand-gold text-sm font-bold tracking-widest uppercase mb-2">The Daily Empowered</h3>
+                            <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-white">Latest Insights</h2>
+                        </div>
+                        <button onclick="switchView('blogs')" class="text-gray-400 hover:text-brand-gold transition-colors mt-6 md:mt-0 flex items-center gap-2 text-sm font-medium">
+                            Read All Articles <i class="fas fa-arrow-right text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Use same dynamic logic, limit to 3 -->
+                    <div id="home-blog-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <p class="col-span-full text-center text-gray-500 animate-pulse">Loading insights...</p>
+                    </div>
+                 </div>
+            </section>
+
+            <!-- Featured Video Strip (Reverted to Icons & Specific Links) - MOVED TO BOTTOM OF HOME -->
+            <section class="py-10 bg-black border-t border-b border-gray-900 overflow-hidden relative">
+                <div class="max-w-7xl mx-auto px-4 mb-4 flex justify-between items-end">
+                    <h3 class="text-white font-bold text-xl">Featured on ELN</h3>
+                    <div class="text-brand-gold text-sm cursor-pointer hover:text-white transition-colors" onclick="switchView('watch')">View All <i class="fas fa-chevron-right text-xs ml-1"></i></div>
+                </div>
+                
+                <!-- Horizontal Scroll Container -->
+                <div class="flex space-x-4 overflow-x-auto px-4 pb-8 scrollbar-hide snap-x">
+                    
+                    <!-- 1. Business & Entrepreneurship -->
+                    <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="video-card min-w-[280px] md:min-w-[320px] aspect-video bg-gray-900 border border-gray-800 rounded-2xl relative cursor-pointer snap-start overflow-hidden block group flex flex-col items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-b from-gray-800/50 to-black/90"></div>
+                        <i class="fas fa-chart-line text-6xl text-gray-700 group-hover:text-brand-gold transition-colors duration-500 z-10 mb-4"></i>
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm group-hover:bg-transparent transition-all z-20 opacity-0 group-hover:opacity-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-black pl-1"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-6 w-full z-30">
+                            <div class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-1">Business & Entrepreneurship</div>
+                            <div class="text-white font-bold text-lg leading-tight">Strategies for Success</div>
+                        </div>
+                    </a>
+
+                    <!-- 2. Faith & Spirituality -->
+                    <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="video-card min-w-[280px] md:min-w-[320px] aspect-video bg-gray-900 border border-gray-800 rounded-2xl relative cursor-pointer snap-start overflow-hidden block group flex flex-col items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-b from-gray-800/50 to-black/90"></div>
+                        <i class="fas fa-church text-6xl text-gray-700 group-hover:text-brand-gold transition-colors duration-500 z-10 mb-4"></i>
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm group-hover:bg-transparent transition-all z-20 opacity-0 group-hover:opacity-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-black pl-1"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-6 w-full z-30">
+                            <div class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-1">Faith & Spirituality</div>
+                            <div class="text-white font-bold text-lg leading-tight">Inspiration for the Soul</div>
+                        </div>
+                    </a>
+
+                    <!-- 3. Education & Learning -->
+                    <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="video-card min-w-[280px] md:min-w-[320px] aspect-video bg-gray-900 border border-gray-800 rounded-2xl relative cursor-pointer snap-start overflow-hidden block group flex flex-col items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-b from-gray-800/50 to-black/90"></div>
+                        <i class="fas fa-graduation-cap text-6xl text-gray-700 group-hover:text-brand-gold transition-colors duration-500 z-10 mb-4"></i>
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm group-hover:bg-transparent transition-all z-20 opacity-0 group-hover:opacity-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-black pl-1"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-6 w-full z-30">
+                            <div class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-1">Education & Learning</div>
+                            <div class="text-white font-bold text-lg leading-tight">Expand Your Mind</div>
+                        </div>
+                    </a>
+
+                    <!-- 4. Health & Wellness -->
+                    <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="video-card min-w-[280px] md:min-w-[320px] aspect-video bg-gray-900 border border-gray-800 rounded-2xl relative cursor-pointer snap-start overflow-hidden block group flex flex-col items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-b from-gray-800/50 to-black/90"></div>
+                        <i class="fas fa-heartbeat text-6xl text-gray-700 group-hover:text-brand-gold transition-colors duration-500 z-10 mb-4"></i>
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm group-hover:bg-transparent transition-all z-20 opacity-0 group-hover:opacity-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-black pl-1"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-6 w-full z-30">
+                            <div class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-1">Health & Wellness</div>
+                            <div class="text-white font-bold text-lg leading-tight">Live Your Best Life</div>
+                        </div>
+                    </a>
+
+                    <!-- 5. Lifestyle & Community -->
+                    <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="video-card min-w-[280px] md:min-w-[320px] aspect-video bg-gray-900 border border-gray-800 rounded-2xl relative cursor-pointer snap-start overflow-hidden block group flex flex-col items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-b from-gray-800/50 to-black/90"></div>
+                        <i class="fas fa-users text-6xl text-gray-700 group-hover:text-brand-gold transition-colors duration-500 z-10 mb-4"></i>
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm group-hover:bg-transparent transition-all z-20 opacity-0 group-hover:opacity-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-black pl-1"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-6 w-full z-30">
+                            <div class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-1">Lifestyle & Community</div>
+                            <div class="text-white font-bold text-lg leading-tight">Connecting People</div>
+                        </div>
+                    </a>
+
+                    <!-- 6. Sports & Music -->
+                    <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="video-card min-w-[280px] md:min-w-[320px] aspect-video bg-gray-900 border border-gray-800 rounded-2xl relative cursor-pointer snap-start overflow-hidden block group flex flex-col items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-b from-gray-800/50 to-black/90"></div>
+                        <i class="fas fa-running text-6xl text-gray-700 group-hover:text-brand-gold transition-colors duration-500 z-10 mb-4"></i>
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm group-hover:bg-transparent transition-all z-20 opacity-0 group-hover:opacity-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-black pl-1"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-6 w-full z-30">
+                            <div class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-1">Sports & Music</div>
+                            <div class="text-white font-bold text-lg leading-tight">Entertainment & Action</div>
+                        </div>
+                    </a>
+
+                    <!-- 7. TV Shows -->
+                    <a href="https://empoweredlifestylenetwork.com/" target="_blank" class="video-card min-w-[280px] md:min-w-[320px] aspect-video bg-gray-900 border border-gray-800 rounded-2xl relative cursor-pointer snap-start overflow-hidden block group flex flex-col items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-b from-gray-800/50 to-black/90"></div>
+                        <i class="fas fa-film text-6xl text-gray-700 group-hover:text-brand-gold transition-colors duration-500 z-10 mb-4"></i>
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm group-hover:bg-transparent transition-all z-20 opacity-0 group-hover:opacity-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center text-black pl-1"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-6 w-full z-30">
+                            <div class="text-brand-gold text-xs font-bold uppercase tracking-wider mb-1">TV Shows</div>
+                            <div class="text-white font-bold text-lg leading-tight">Binge-worthy Series</div>
+                        </div>
+                    </a>
+
+                </div>
+            </section>
+        </div>
+
+        <!-- ======================= VIEW: WATCH ======================= -->
+        <div id="view-watch" class="view-section">
+            <section id="watch-live" class="min-h-screen pt-12 pb-24 px-4 bg-black text-white text-center">
+                <div class="max-w-7xl mx-auto">
+                    
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6 text-white">Watch Live</h2>
+                    <p class="mb-8 text-xl text-gray-400">Stream the Empowered Lifestyle Network 24/7</p>
+
+                    <!-- Responsive Iframe Container -->
+                    <div class="relative w-full aspect-video bg-black rounded-3xl overflow-hidden border border-gray-800 shadow-2xl mb-12">
+                        <iframe 
+                            class="absolute top-0 left-0 w-full h-full"
+                            referrerpolicy="no-referrer-when-downgrade" 
+                            src="https://www.lightcast.com/embed/player.php?id=38564&type=live&multiBitrate=1" 
+                            frameborder="0" 
+                            allow="fullscreen; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+
+                    <div class="mt-12">
+                        <h3 class="text-2xl font-bold mb-8 text-white">Download Our App</h3>
+                        <div class="flex flex-wrap justify-center gap-4">
+                            
+                            <!-- iOS -->
+                            <a href="https://apps.apple.com/tr/app/empowered-lifestyle-network/id1594336685?l=tr" target="_blank" class="no-underline">
+                                <button class="px-6 py-3 text-base cursor-pointer bg-white text-black border-none rounded-lg font-bold hover:bg-gray-200 transition-colors min-w-[160px] shadow-lg">
+                                    Download on iOS
+                                </button>
+                            </a>
+
+                            <!-- Android -->
+                            <a href="https://play.google.com/store/apps/details?id=com.megastream.empoweredlifestylenetwork" target="_blank" class="no-underline">
+                                <button class="px-6 py-3 text-base cursor-pointer bg-white text-black border-none rounded-lg font-bold hover:bg-gray-200 transition-colors min-w-[160px] shadow-lg">
+                                    Get on Android
+                                </button>
+                            </a>
+
+                            <!-- Roku -->
+                            <a href="https://channelstore.roku.com/details/86fd8bdeba9ef8aac5d1d124f8bbad4f:3f14ff7c8c8244a09fb0af0804634d39/empowered-lifestyle-network" target="_blank" class="no-underline">
+                                <button class="px-6 py-3 text-base cursor-pointer bg-[#662D91] text-white border-none rounded-lg font-bold hover:brightness-110 transition-colors min-w-[160px] shadow-lg">
+                                    Add to Roku
+                                </button>
+                            </a>
+
+                            <!-- Fire TV -->
+                            <a href="https://www.amazon.com/MEGASTREAM-INC-Empowered-Lifestyle-Network/dp/B09K78GQLT/ref=sr_1_1?keywords=empowered+lifestyle+network&qid=1648697828&s=mobile-apps&sr=1-1" target="_blank" class="no-underline">
+                                <button class="px-6 py-3 text-base cursor-pointer bg-[#FF9900] text-black border-none rounded-lg font-bold hover:brightness-110 transition-colors min-w-[160px] shadow-lg">
+                                    Get on Fire TV
+                                </button>
+                            </a>
+
+                            <!-- Apple TV -->
+                            <a href="https://apps.apple.com/tt/app/empowered-lifestyle-network/id1594336685" target="_blank" class="no-underline">
+                                <button class="px-6 py-3 text-base cursor-pointer bg-[#333] text-white border-none rounded-lg font-bold hover:bg-[#444] transition-colors min-w-[160px] shadow-lg">
+                                    Apple TV
+                                </button>
+                            </a>
+
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+
+        <!-- ======================= VIEW: SERVICES ======================= -->
+        <div id="view-services" class="view-section">
+            <section class="min-h-screen pt-12 pb-24 px-4">
+                <div class="max-w-7xl mx-auto">
+                    <div class="text-center mb-16">
+                        <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">Choose Your Path</h1>
+                        <p class="text-gray-400">From digital storefronts to full-service empire building.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                        
+                        <!-- 1. LEFT CARD: Branding Package -->
+                        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-8 flex flex-col hover:border-brand-gold transition-colors">
+                            <h3 class="text-2xl font-bold text-white mb-2">Brand Development</h3>
+                            <p class="text-brand-gold text-sm font-bold uppercase mb-6">Branding Package</p>
+                            
+                            <!-- Price -->
+                            <div class="min-h-24 flex flex-col justify-end mb-2">
+                                <span class="text-sm text-gray-400 block mb-1">Starting at</span>
+                                <div>
+                                    <span class="text-5xl font-bold text-white">$1,250</span>
+                                    <span class="text-lg text-gray-500 font-normal">/month</span>
+                                </div>
+                            </div>
+
+                            <p class="text-gray-500 text-sm mb-8 h-10">AI-enhanced marketing and identity systems that prioritize human connection.</p>
+                            
+                            <ul class="space-y-4 mb-8 flex-1 text-sm text-gray-300">
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> AI-Powered Brand Strategy & Positioning</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Logo Design & Visual Identity</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Social Media Content Creation</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Brand Partnerships & Collaborations</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Personalized CRM & Email Automation</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Advertising Campaign Management</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Predictive Performance Reporting & Analytics</li>
+                            </ul>
+                            <button onclick="openBooking()" class="w-full py-3 rounded-xl border border-brand-gold text-brand-gold font-bold hover:bg-brand-gold hover:text-black transition-colors mt-auto">Start Branding</button>
+                        </div>
+
+                        <!-- 2. MIDDLE CARD: Empire Bundle -->
+                        <div class="bg-gradient-to-b from-gray-800 to-black border-2 border-brand-gold rounded-3xl p-8 flex flex-col relative transform md:-translate-y-4 shadow-[0_0_40px_rgba(198,156,64,0.2)] z-10">
+                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-brand-gold text-black px-4 py-1 rounded-full text-xs font-bold uppercase">Best Value</div>
+                            <h3 class="text-2xl font-bold text-white mb-2">Agentic Empire Ecosystem</h3>
+                            <p class="text-brand-gold text-sm font-bold uppercase mb-6">The Human-Centric AI Powerhouse</p>
+                            
+                            <!-- Price -->
+                            <div class="min-h-24 flex flex-col justify-end mb-2">
+                                <span class="text-sm text-gray-400 block mb-1 opacity-0">Bundle</span>
+                                <div>
+                                    <span class="text-5xl font-bold text-white">Custom</span>
+                                </div>
+                            </div>
+
+                            <p class="text-gray-500 text-sm mb-8 h-10">The complete ecosystem to monetize your expertise.</p>
+                            
+                            <ul class="space-y-4 mb-8 flex-1 text-sm text-white">
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Autonomous Content Distribution (Roku, Apple, iOS, Android)</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Predictive Revenue Modeling</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Agentic Community Engagement</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Multi-Platform Live Streaming</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Lifecycle Retention Systems</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> AI Cloud Integration</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Systems & Database Scaling</li>
+                            </ul>
+                            <button onclick="openBooking()" class="w-full py-4 rounded-xl bg-brand-gold text-black font-bold hover:bg-white transition-colors shadow-lg mt-auto">Book Empire Consultation</button>
+                        </div>
+
+                        <!-- 3. RIGHT CARD: Launch Site -->
+                        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-8 flex flex-col hover:border-brand-gold transition-colors">
+                            <h3 class="text-2xl font-bold text-white mb-2">Launch Site</h3>
+                            <p class="text-brand-gold text-sm font-bold uppercase mb-6">Digital Storefront</p>
+                            
+                            <!-- Price -->
+                            <div class="min-h-24 flex flex-col justify-end mb-2">
+                                <span class="text-sm text-gray-400 block mb-1">Starting at</span>
+                                <div>
+                                    <span class="text-5xl font-bold text-white">$1,500</span>
+                                </div>
+                            </div>
+                            
+                            <p class="text-gray-500 text-sm mb-8 h-10">Your high-performance digital storefront and intelligent engine.</p>
+                            
+                            <ul class="space-y-4 mb-8 flex-1 text-sm text-gray-300">
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Modern Web Architecture</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> SEO & Answer Engine Optimization (AEO)</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Agentic Lead Qualification</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Custom Python Integrations & Deployment</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Intelligent Sales Funnels Automation</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Serverless Infrastructure</li>
+                                <li class="flex gap-3"><i class="fas fa-check text-brand-gold mt-1"></i> Dynamic Landing Page Personalization</li>
+                            </ul>
+                            <button onclick="openBooking()" class="w-full py-3 rounded-xl border border-brand-gold text-brand-gold font-bold hover:bg-brand-gold hover:text-black transition-colors mt-auto">Get Started</button>
+                        </div>
+
+                    </div>
+
+                    <!-- A La Carte -->
+                    <div class="mt-20 border-t border-gray-800 pt-10 text-center">
+                        <h3 class="text-2xl font-bold text-white mb-4">Need Something Custom?</h3>
+                        <p class="text-gray-400 mb-6">Website building, single assets, or specific consultation.</p>
+                        <button onclick="toggleAlaCarte()" class="text-brand-gold border-b border-brand-gold pb-1 hover:text-white hover:border-white transition-colors">View A La Carte Options</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ======================= VIEW: BLOGS ======================= -->
+        <div id="view-blogs" class="view-section">
+            <section class="min-h-screen pt-12 pb-24 px-4">
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-12 border-b border-gray-800 pb-8 text-center md:text-left">
+                        <h1 class="text-5xl md:text-7xl font-bold text-white mb-4">The Daily <br><span class="text-gradient-gold">Empowered</span></h1>
+                        <p class="text-gray-400">Insights on business, wealth, and wellness from the Network.</p>
+                    </div>
+
+                    <!-- Dynamic Blog Container -->
+                    <div id="page-blog-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <p id="loading-msg" class="col-span-full text-center text-gray-500 animate-pulse">Loading latest articles from the network...</p>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+
+        <!-- ======================= VIEW: OUR STORY ======================= -->
+        <div id="view-story" class="view-section">
+            <section class="min-h-screen pt-12 pb-24 px-4">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-16">
+                        <h1 class="text-5xl md:text-7xl font-bold text-white mb-8">Our Story</h1>
+                        <p class="text-xl text-gray-300 leading-relaxed">
+                            ELN was born from a simple prayer: to create a trusted space for authentic narratives. From a local husband-and-wife radio broadcast to a multi-platform streaming network, our journey has always been about one thing—empowerment.
+                        </p>
+                        <p class="text-xl text-gray-300 leading-relaxed mt-6">
+                            When the world shifted in 2020, we didn't just adapt—we expanded. We moved beyond the airwaves to create a world-class streaming infrastructure on Roku, Apple TV, and mobile platforms. Today, we take that same expertise to humanize your business, turning your story into a tangible legacy that educates, encourages, empowers, and inspires.
+                        </p>
+                    </div>
+
+                    <!-- Vision -->
+                    <div class="bg-gray-900/50 border-l-4 border-brand-gold p-8 rounded-r-xl mb-20">
+                        <h3 class="text-brand-gold font-bold text-lg mb-2">OUR VISION</h3>
+                        <p class="text-white text-2xl font-light italic">"Our vision is to create a marketplace where viewers can easily access the type of content that will inspire, encourage and empower them."</p>
+                    </div>
+
+                    <!-- Testimonials -->
+                    <h2 class="text-3xl font-bold text-white mb-8 text-center">What They Say</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 flex flex-col items-center text-center">
+                            <div class="flex text-brand-gold mb-4"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                            <p class="text-gray-400 mb-6">"Working with ELN changed everything for our organization. In less than 90 days, they helped us raise over $15,000, giving us the momentum we needed to expand our reach and impact."</p>
+                            <div class="flex flex-col items-center">
+                                <img src="https://lh3.googleusercontent.com/u/0/d/1KPTMdWg7aqFXhVl0zhSXcd0Y8ABwo9Yo" 
+                                     style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;" 
+                                     alt="Emanuel Yancey">
+                                <div class="text-sm font-bold text-white">Emanuel Yancey <span class="block text-gray-500 font-normal">Emanuel’s Hope Foundation</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 flex flex-col items-center text-center">
+                            <div class="flex text-brand-gold mb-4"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                            <p class="text-gray-400 mb-6">"Partnering with ELN was a turning point for my practice. They didn't just create and maintain my brand; they amplified it. Since launching, we have quadrupled our business, turning my vision into a thriving professional legacy."</p>
+                            <div class="flex flex-col items-center">
+                                <img src="https://lh3.googleusercontent.com/u/0/d/1hvULV4Ihdw7kJEmSdUmz3oy58auR6Tcw" 
+                                     style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;" 
+                                     alt="DD Willingham">
+                                <div class="text-sm font-bold text-white">DD Willingham, LMT, MMT, C.M.A <span class="block text-gray-500 font-normal">Massage 4 Life, LLC</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- A La Carte Modal -->
+        <div id="ala-carte-modal" class="modal-overlay">
+            <div class="modal-content relative p-8">
+                <button onclick="toggleAlaCarte()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-white mb-2">A La Carte Services</h2>
+                    <p class="text-gray-400">Select individual services to build your custom package.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Logo Design</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Brand Identity Guide</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Website Design (5 Pages)</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Landing Page Design</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> E-commerce Setup</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> SEO Audit & Optimization</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Social Media Strategy</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Monthly Content Calendar</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Instagram/Facebook Ads Setup</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Google Ads Campaign</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Email Marketing Setup</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Newsletter Template Design</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Podcast Cover Art</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Podcast Intro/Outro Production</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Video Editing (Per Minute)</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> YouTube Channel Optimization</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Roku Channel Development</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Apple TV App Development</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Amazon Fire TV App Development</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Mobile App (iOS/Android)</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Live Stream Setup Support</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Pay-Per-View Event Configuration</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Automated Lead Magnet Creation</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Sales Funnel Build</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Press Release Writing & Distribution</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Custom LLM Prompt Engineering</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Enterprise Digital Transformation Audit</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> AI Persona & Voice Cloning</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> API Development & Integration</div>
+                    <div class="p-4 bg-gray-900 rounded-lg border border-gray-800"><i class="fas fa-check text-brand-gold mr-2"></i> Predictive Ad Spend Optimization</div>
+                </div>
+                <div class="mt-8 text-center">
+                    <button onclick="openBooking()" class="px-8 py-3 bg-brand-gold text-black rounded-full font-bold text-sm tracking-widest hover:bg-white transition-colors">INQUIRE NOW</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTACT FORM (Universal Footer for Funnel) -->
+        <section id="contact-form" class="py-24 px-4 bg-black relative border-t border-gray-800">
+            <div class="max-w-4xl mx-auto relative z-10">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6 text-white">Ready to <span class="text-gradient-gold">Humanize Your Brand?</span></h2>
+                    <p class="text-xl text-gray-400 font-light">Schedule a free strategy consultation to discuss your streaming and branding goals.</p>
+                </div>
+                
+                <div class="bg-gray-900/50 p-8 md:p-12 rounded-[2rem] border border-gray-800 backdrop-blur-sm shadow-2xl">
+                    <form class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-sm text-gray-400 ml-2">First Name</label>
+                                <input type="text" class="w-full px-6 py-4 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors" placeholder="Jane">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm text-gray-400 ml-2">Last Name</label>
+                                <input type="text" class="w-full px-6 py-4 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors" placeholder="Doe">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm text-gray-400 ml-2">Email Address</label>
+                            <input type="email" class="w-full px-6 py-4 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors" placeholder="jane@company.com">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm text-gray-400 ml-2">I'm interested in:</label>
+                            <select class="w-full px-6 py-4 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors appearance-none">
+                                <option>Brand Development ($1,250/mo)</option>
+                                <option>Agentic Empire Ecosystem (Custom)</option>
+                                <option>Launch Site (Starting at $1,500)</option>
+                                <option>Other / Custom Inquiry</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full px-6 py-5 bg-brand-gold text-black font-bold text-lg tracking-widest rounded-xl hover:bg-white transition-all duration-300 uppercase shadow-[0_4px_14px_0_rgba(198,156,64,0.39)] hover:shadow-[0_6px_20px_rgba(198,156,64,0.23)] transform hover:-translate-y-1">
+                            Book My Free Consultation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black py-12 border-t border-gray-900 text-center text-gray-600 text-xs">
+        <p>&copy; 2025 Empowered Lifestyle Network. All rights reserved.</p>
+    </footer>
+
+    <!-- PapaParse for Google Sheets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <!-- Scripts -->
+    <script>
+        const bookingUrl = "https://scheduler.zoom.us/empowered-lifestyle-network/demo";
+
+        function openBooking() {
+            window.open(bookingUrl, '_blank');
+        }
+
+        // Toggle A La Carte Modal
+        function toggleAlaCarte() {
+            const modal = document.getElementById('ala-carte-modal');
+            if (modal.classList.contains('active')) {
+                modal.classList.remove('active');
+                setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            } else {
+                modal.classList.remove('hidden');
+                setTimeout(() => { modal.classList.add('active'); }, 10);
+            }
+        }
+
+        // Google Sheet Blog Logic
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZ_1FRU-xSZLZ1mKlnAAWYLh6dX9Jql6K_QdG1JHtHSL9HE8b1R7MwXzfjr0VCldrE_sNUWv3vKDMD/pub?output=csv";
+
+        Papa.parse(sheetUrl, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                const data = results.data;
+                const homeContainer = document.getElementById('home-blog-container');
+                const pageContainer = document.getElementById('page-blog-container');
+                
+                if(homeContainer) homeContainer.innerHTML = '';
+                if(pageContainer) pageContainer.innerHTML = '';
+
+                let count = 0;
+
+                data.forEach(row => {
+                    if (row['Status'] && row['Status'].trim() === 'Published') {
+                        
+                        // Template function
+                        const createCard = () => {
+                            const card = document.createElement('div');
+                            card.className = "bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 group cursor-pointer hover:border-brand-gold transition-colors duration-300 flex flex-col h-full";
+                            card.onclick = () => window.open(row['LinkedIn URL'], '_blank');
+                            
+                            card.innerHTML = `
+                                <div class="h-48 overflow-hidden relative">
+                                    <img src="${row['Featured Image']}" alt="${row['Article Title']}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/400x200?text=ELN+Insight'"> 
+                                    <div class="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-gold border border-gray-700 uppercase tracking-wider">${row['Category'] || 'Insight'}</div>
+                                </div>
+                                <div class="p-6 flex-1 flex flex-col">
+                                    <h3 class="text-xl font-bold text-white mb-3 group-hover:text-brand-gold transition-colors line-clamp-2">${row['Article Title']}</h3>
+                                    <p class="text-gray-400 text-sm mb-4 line-clamp-3 flex-1">${row['Site Summary']}</p>
+                                    <span class="text-brand-gold text-sm font-bold uppercase tracking-wider flex items-center gap-2 mt-auto hover:text-white transition-colors">
+                                        Read Article <i class="fas fa-arrow-right text-xs"></i>
+                                    </span>
+                                </div>
+                            `;
+                            return card;
+                        };
+
+                        // Add to Page (All Published)
+                        if (pageContainer) {
+                            pageContainer.appendChild(createCard());
+                        }
+
+                        // Add to Home (Top 3 Published)
+                        if (homeContainer && count < 3) {
+                            homeContainer.appendChild(createCard());
+                        }
+                        
+                        count++;
+                    }
+                });
+            }
+        });
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                // Simple animation effect
+                gsap.fromTo(menu, {opacity: 0, y: -20}, {opacity: 1, y: 0, duration: 0.3});
+            } else {
+                gsap.to(menu, {opacity: 0, y: -20, duration: 0.2, onComplete: () => menu.classList.add('hidden')});
+            }
+        }
+
+        // SPA Logic
+        function switchView(viewName) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
+                setTimeout(() => {
+                    if(!el.classList.contains('active')) el.style.display = 'none';
+                }, 500); // fade out duration
+            });
+
+            // Show selected view
+            const target = document.getElementById('view-' + viewName);
+            if(target) {
+                target.style.display = 'block';
+                // Small delay to allow display:block to render before opacity transition
+                setTimeout(() => {
+                    target.classList.add('active');
+                }, 50);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // Init ThreeJS Background
+        const initThreeJS = () => {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 800;
+            const posArray = new Float32Array(particlesCount * 3);
+            for(let i = 0; i < particlesCount * 3; i++) { posArray[i] = (Math.random() - 0.5) * 60; }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particlesMaterial = new THREE.PointsMaterial({ size: 0.12, color: 0xC69C40, transparent: true, opacity: 0.5 });
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+            document.addEventListener('mousemove', (event) => { mouseX = (event.clientX - windowHalfX); mouseY = (event.clientY - windowHalfY); });
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+            const animate = () => {
+                targetX = mouseX * 0.0005; targetY = mouseY * 0.0005;
+                particlesMesh.rotation.y += 0.002;
+                particlesMesh.rotation.x += 0.01 * (targetY - particlesMesh.rotation.x);
+                particlesMesh.rotation.y += 0.01 * (targetX - particlesMesh.rotation.y);
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            };
+            animate();
+        };
+
+        // Init GSAP
+        const initGSAP = () => {
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.to(".reveal-text", { y: 0, opacity: 1, duration: 1.2, stagger: 0.15, ease: "power3.out", delay: 0.2 });
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initThreeJS();
+            initGSAP();
+        });
+    </script>
+</body>
+</html>
