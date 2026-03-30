@@ -618,6 +618,42 @@
 
                     </div>
 
+                    <!-- AI For Business Free Training Banner -->
+                    <div id="reserve" class="mt-20 bg-black border-y-2 border-brand-gold py-16 px-6 relative overflow-hidden rounded-[2rem] shadow-2xl scroll-mt-32">
+                        <div class="absolute top-0 left-0 w-64 h-64 bg-brand-gold/5 rounded-full blur-[80px] pointer-events-none"></div>
+                        
+                        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+                            <!-- Text Content -->
+                            <div class="flex-1 text-center md:text-left">
+                                <h2 class="text-brand-gold text-sm font-bold uppercase tracking-[0.2em] mb-3">Free Training</h2>
+                                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">AI For Business 101</h1>
+                                <h3 class="text-xl md:text-2xl text-brand-goldLight font-medium mb-6">Introduction to Building Successful Businesses with AI.</h3>
+                                <p class="text-base text-gray-300 leading-relaxed max-w-xl mx-auto md:mx-0">
+                                    Join this <strong>FREE AI training</strong> to master the transition from human creativity to technical automation. As the AI and Brand Director for Empowered Lifestyle Network and a Google Cloud Innovator, Malik St Hilaire brings over a decade of enterprise experience—combining a Stanford-certified foundation in Machine Learning with a hands-on LLM and Agentic Developer mindset.
+                                </p>
+                            </div>
+
+                            <!-- Form Container -->
+                            <div class="w-full md:w-[450px] bg-gray-900 p-8 rounded-2xl border border-gray-800">
+                                <form id="eln-ai-form" class="space-y-4">
+                                    <div class="flex flex-col sm:flex-row gap-4">
+                                        <input type="text" name="firstName" placeholder="First Name" required class="w-full px-5 py-3 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors">
+                                        <input type="text" name="lastName" placeholder="Last Name" required class="w-full px-5 py-3 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors">
+                                    </div>
+                                    <input type="email" name="email" placeholder="Email Address" required class="w-full px-5 py-3 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors">
+                                    <input type="tel" name="phone" placeholder="Phone Number" required class="w-full px-5 py-3 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:border-brand-gold transition-colors">
+                                    
+                                    <button type="submit" id="submit-btn" class="w-full py-4 mt-2 bg-brand-gold text-black font-bold text-sm tracking-widest rounded-xl hover:bg-white transition-all uppercase">
+                                        Reserve My Seat
+                                    </button>
+                                </form>
+                                <div id="form-message" class="hidden mt-6 text-brand-gold text-center font-bold text-lg">
+                                    Success! Check your email for the app link.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- A La Carte -->
                     <div class="mt-20 border-t border-gray-800 pt-10 text-center">
                         <h3 class="text-2xl font-bold text-white mb-4">Need Something Custom?</h3>
@@ -801,6 +837,37 @@
             window.open(bookingUrl, '_blank');
         }
 
+        // Free Training AI Form Logic
+        const aiScriptURL = 'https://script.google.com/macros/s/AKfycbyEBUY5-vT8gtDSEJmyToaAUE_KlM8K6aATttYbYZbfHvlUVkhWLFXufQIHqn2ANV9J/exec';
+        const aiForm = document.getElementById('eln-ai-form');
+        const aiBtn = document.getElementById('submit-btn');
+        const aiMsg = document.getElementById('form-message');
+
+        if (aiForm) {
+            aiForm.addEventListener('submit', e => {
+                e.preventDefault();
+                aiBtn.disabled = true;
+                aiBtn.innerText = 'Registering...';
+
+                fetch(aiScriptURL, { method: 'POST', body: new FormData(aiForm)})
+                    .then(response => {
+                        aiForm.style.display = 'none';
+                        aiMsg.style.display = 'block';
+                        aiMsg.classList.remove('hidden');
+                        
+                        // Reload page after 5 seconds to allow for more submissions
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 5000);
+                    })
+                    .catch(error => {
+                        alert('Error! Please try again.');
+                        aiBtn.disabled = false;
+                        aiBtn.innerText = 'Reserve My Seat';
+                    });
+            });
+        }
+
         // Toggle A La Carte Modal
         function toggleAlaCarte() {
             const modal = document.getElementById('ala-carte-modal');
@@ -948,6 +1015,16 @@
         window.addEventListener('DOMContentLoaded', () => {
             initThreeJS();
             initGSAP();
+
+            // Handle deep linking for shared URLs (e.g., #reserve)
+            if (window.location.hash === '#reserve') {
+                switchView('services');
+                // Wait for the view transition to finish before scrolling
+                setTimeout(() => {
+                    const target = document.getElementById('reserve');
+                    if (target) target.scrollIntoView({ behavior: 'smooth' });
+                }, 600); 
+            }
         });
     </script>
 </body>
