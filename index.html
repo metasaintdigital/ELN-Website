@@ -629,7 +629,7 @@
                                 <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">AI For Business 101</h1>
                                 <h3 class="text-xl md:text-2xl text-brand-goldLight font-medium mb-6">Introduction to Building Successful Businesses with AI.</h3>
                                 <p class="text-base text-gray-300 leading-relaxed max-w-xl mx-auto md:mx-0">
-                                    Join this <strong>FREE AI training</strong> to master the transition from human creativity to technical automation. As the AI and Brand Director for Empowered Lifestyle Network and a Google Cloud Innovator, Malik St Hilaire brings over a decade of enterprise experience—combining a Stanford-certified foundation in Machine Learning with a hands-on LLM and Agentic Developer mindset.
+                                    Join this <strong>FREE AI training</strong> to master the transition from human creativity to technical automation. As the AI and Brand Director for Empowered Lifestyle Network, a Google Cloud Innovator, and Stanford-certified in Machine Learning, Malik St Hilaire helps you leverage AI to scale operations, monetize high-level AI skills, and add elite automation to your professional utility belt for maximum market impact.
                                 </p>
                             </div>
 
@@ -1016,14 +1016,17 @@
             initThreeJS();
             initGSAP();
 
-            // Handle deep linking for shared URLs (e.g., #reserve)
-            if (window.location.hash === '#reserve') {
+            // Handle deep linking for shared URLs (e.g., #reserve, #watch)
+            const hash = window.location.hash;
+            if (hash === '#reserve') {
                 switchView('services');
                 // Wait for the view transition to finish before scrolling
                 setTimeout(() => {
                     const target = document.getElementById('reserve');
                     if (target) target.scrollIntoView({ behavior: 'smooth' });
                 }, 600); 
+            } else if (hash === '#watch') {
+                switchView('watch');
             }
         });
     </script>
