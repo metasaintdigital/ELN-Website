@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Empowered Lifestyle Network</title>
+    <script type="text/javascript">
+      // This script captures the path (like /reserve) and sends it to index.html
+      var pathSegment = window.location.pathname;
+      window.location.replace(
+        window.location.protocol + '//' + window.location.hostname + 
+        (window.location.port ? ':' + window.location.port : '') + '/?p=' + pathSegment
+      );
+    </script>
+  </head>
+  <body>
+    </body>
+</html>

@@ -1016,11 +1016,15 @@
             initThreeJS();
             initGSAP();
 
-            // Handle deep linking for shared URLs (e.g., /reserve, /watch)
-            const path = window.location.pathname;
+            // 1. Check for the redirect parameter 'p' for SPA routing
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectedPath = urlParams.get('p');
+            const path = redirectedPath || window.location.pathname;
             const hash = window.location.hash; // Kept as fallback
             
+            // 2. Route to the correct view based on the URL
             if (path.includes('/reserve') || hash === '#reserve') {
+                // Route to the services view where the reserve section lives
                 switchView('services');
                 // Wait for the view transition to finish before scrolling
                 setTimeout(() => {
@@ -1029,6 +1033,12 @@
                 }, 600); 
             } else if (path.includes('/watch') || hash === '#watch') {
                 switchView('watch');
+            }
+
+            // 3. Clean up the URL bar if redirected
+            if (redirectedPath) {
+                // This makes the browser bar say /reserve instead of /?p=/reserve
+                window.history.replaceState(null, null, redirectedPath);
             }
         });
     </script>
